@@ -1,7 +1,5 @@
 {
   "name": "Edinho Pneus Manager",
   "description": "A comprehensive management system for auto repair shops including Kanban, POS (PDV), Inventory, and Dashboards.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }
