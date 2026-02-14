@@ -11,7 +11,14 @@ import {
 } from "../types";
 
 const nowISO = (): string => new Date().toISOString();
-const uid = (): string => crypto.randomUUID();
+
+// Fallback para ambientes onde crypto.randomUUID pode não existir
+const uid = (): string => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `id_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+};
 
 const DEFAULT_STORE_ID = "1";
 
@@ -174,7 +181,13 @@ export const mockDb: MockDB = {
   ],
 };
 
+// DB “em memória” (fonte única de verdade pro mockApi)
 export const db = {
+  // Users
+  listUsers(): User[] {
+    return mockDb.users;
+  },
+
   // Products
   listProducts(): Product[] {
     return mockDb.products;

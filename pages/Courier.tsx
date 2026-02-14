@@ -1,23 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Truck, MapPin, Key } from 'lucide-react';
 import { CourierOrder, CourierStatus } from '../types';
+import { listCourierOrders, setCourierStatus } from '../lib/mockApi';
 
 const Courier: React.FC = () => {
-  const orders: CourierOrder[] = [
-    { 
-      id: '1', storeId: '1', fromStoreId: '1', toStoreId: '2', status: CourierStatus.ACEITO, 
-      otp: '4590', createdAt: '14:00', description: 'Transferência de Pneus (4x)', 
-      driverName: 'Roberto', estimatedArrival: '14:30'
-    },
-    { 
-      id: '2', storeId: '1', fromStoreId: '1', toStoreId: '3', status: CourierStatus.PENDENTE, 
-      createdAt: '14:15', description: 'Peças de Reposição', estimatedArrival: '15:00'
-    },
-    { 
-      id: '3', storeId: '1', fromStoreId: '1', toStoreId: '2', status: CourierStatus.ENTREGUE, 
-      createdAt: '10:00', description: 'Documentos Fiscais', driverName: 'Carlos', estimatedArrival: '10:45'
-    }
-  ];
+  const [orders, setOrders] = useState<CourierOrder[]>(() => listCourierOrders({ storeId: '1' }));
+
+  const refresh = () => {
+    setOrders(listCourierOrders({ storeId: '1' }));
+  };
 
   const getStatusColor = (status: CourierStatus) => {
     switch (status) {
@@ -27,6 +18,19 @@ const Courier: React.FC = () => {
       case CourierStatus.ENTREGUE: return 'bg-green-100 text-green-700';
       case CourierStatus.CANCELADO: return 'bg-red-100 text-red-700';
       default: return 'bg-slate-100 text-slate-600';
+    }
+  };
+
+  const handleAdvance = (id: string, status: CourierStatus) => {
+    if (status === CourierStatus.ACEITO) {
+      setCourierStatus(id, CourierStatus.COLETADO);
+      refresh();
+      return;
+    }
+    if (status === CourierStatus.COLETADO) {
+      setCourierStatus(id, CourierStatus.ENTREGUE);
+      refresh();
+      return;
     }
   };
 
@@ -53,7 +57,7 @@ const Courier: React.FC = () => {
         {orders.map((order) => (
           <div key={order.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-6 relative overflow-hidden">
             {order.status === CourierStatus.ACEITO && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-500"></div>}
-            
+
             <div className="flex-1 space-y-4">
               <div className="flex justify-between items-start">
                 <div>
@@ -87,19 +91,28 @@ const Courier: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex md:flex-col items-center justify-center gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 min-w-[150px]">
+            <div className="flex md:flex-col items-center justify-center gap-3 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 min-w-[170px]">
               {order.status !== CourierStatus.ENTREGUE && order.status !== CourierStatus.CANCELADO && (
                 <div className="text-center">
                   <p className="text-xs text-slate-400">Previsão</p>
                   <p className="text-lg font-bold text-slate-800">{order.estimatedArrival}</p>
                 </div>
               )}
-              
+
               {order.otp && order.status === CourierStatus.ACEITO && (
                 <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
                   <Key size={16} className="text-slate-500" />
                   <span className="font-mono font-bold text-lg tracking-widest text-slate-800">{order.otp}</span>
                 </div>
+              )}
+
+              {(order.status === CourierStatus.ACEITO || order.status === CourierStatus.COLETADO) && (
+                <button
+                  onClick={() => handleAdvance(order.id, order.status)}
+                  className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition-colors"
+                >
+                  {order.status === CourierStatus.ACEITO ? 'Marcar como Coletado' : 'Marcar como Entregue'}
+                </button>
               )}
 
               <button className="flex-1 md:flex-none w-full bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">

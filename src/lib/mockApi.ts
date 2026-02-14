@@ -6,10 +6,16 @@ import {
   type Product,
   type ServiceOrder,
   type Transaction,
+  type User,
 } from "../types";
 import { db } from "./mockDb";
 
 type ListOpts = { storeId?: string };
+
+// USERS (ADMIN)
+export const listUsers = (): User[] => {
+  return db.listUsers();
+};
 
 // PRODUCTS
 export const listProducts = (opts: ListOpts = {}): Product[] => {
@@ -45,9 +51,7 @@ export const listTransactions = (opts: ListOpts = {}): Transaction[] => {
   return opts.storeId ? all.filter((t: Transaction) => t.storeId === opts.storeId) : all;
 };
 
-export const createTransaction = (
-  input: Omit<Transaction, "id" | "createdAt">
-): Transaction => {
+export const createTransaction = (input: Omit<Transaction, "id" | "createdAt">): Transaction => {
   return db.addTransaction(input);
 };
 
