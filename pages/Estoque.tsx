@@ -1,15 +1,19 @@
 import React from 'react';
 import { Package, Search, Filter, Download, CheckCircle, AlertOctagon } from 'lucide-react';
-import { Product, ProductStatus } from '../types';
+import { ProductStatus } from '../types';
+import { listProducts, approveProduct } from '../lib/mockApi';
 
 const Estoque: React.FC = () => {
-  const inventory: Product[] = [
-    { id: '1', storeId: '1', labelId: 'PIR-001', name: 'Pneu Pirelli 175/65 R14', category: 'Pneus', stock: 24, size: '175/65 R14', suggestedPrice: 350.00, costPrice: 200.00, condition: 'Novo', status: ProductStatus.APROVADO },
-    { id: '2', storeId: '1', labelId: 'OIL-003', name: 'Óleo 5W30 Sintético', category: 'Óleos', stock: 8, size: '1L', suggestedPrice: 45.00, costPrice: 25.00, condition: 'Novo', status: ProductStatus.APROVADO },
-    { id: '3', storeId: '1', labelId: 'FIL-004', name: 'Filtro de Ar Gol G5', category: 'Filtros', stock: 15, size: 'Padrão', suggestedPrice: 25.00, costPrice: 10.00, condition: 'Novo', status: ProductStatus.EM_CONFERENCIA },
-    { id: '4', storeId: '1', labelId: 'BRK-005', name: 'Pastilha Freio Celta', category: 'Freios', stock: 4, size: 'Padrão', suggestedPrice: 80.00, costPrice: 40.00, condition: 'Novo', status: ProductStatus.APROVADO },
-    { id: '5', storeId: '1', labelId: 'USED-010', name: 'Pneu Usado Aro 15', category: 'Pneus', stock: 2, size: '195/60 R15', suggestedPrice: 150.00, costPrice: 50.00, condition: 'Usado', status: ProductStatus.EM_CONFERENCIA },
-  ];
+  // Agora vem do mock central (em memória)
+  const inventory = listProducts({ storeId: '1' });
+
+  const handleApprove = (id: string) => {
+    approveProduct(id);
+    // como o mock é em memória, o jeito mais simples aqui (sem hooks ainda)
+    // é forçar re-render com um reload leve.
+    // depois a gente troca por hooks e state.
+    window.location.reload();
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -36,9 +40,9 @@ const Estoque: React.FC = () => {
       <div className="p-4 bg-slate-50 border-b border-slate-200">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nome ou Label ID..." 
+          <input
+            type="text"
+            placeholder="Buscar por nome ou Label ID..."
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none bg-white"
           />
         </div>
@@ -71,10 +75,14 @@ const Estoque: React.FC = () => {
                 <td className="p-4 text-slate-700">{item.stock} un.</td>
                 <td className="p-4">
                   {item.status === ProductStatus.EM_CONFERENCIA ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                    <button
+                      onClick={() => handleApprove(item.id)}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 transition-colors"
+                      title="Clique para aprovar (fake)"
+                    >
                       <AlertOctagon size={12} className="mr-1" />
-                      Em Conferência
-                    </span>
+                      Em Conferência (Aprovar)
+                    </button>
                   ) : (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                       <CheckCircle size={12} className="mr-1" />
@@ -87,7 +95,7 @@ const Estoque: React.FC = () => {
           </tbody>
         </table>
       </div>
-      
+
       <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-sm text-slate-500">
         <span>Mostrando {inventory.length} de {inventory.length} itens</span>
         <div className="flex gap-1">
