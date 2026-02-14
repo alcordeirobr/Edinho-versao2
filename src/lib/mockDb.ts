@@ -1,63 +1,237 @@
 import {
   CourierStatus,
+  PaymentMethod,
   ProductStatus,
   ServiceOrderStatus,
   type CourierOrder,
   type Product,
   type ServiceOrder,
   type Transaction,
+  type User,
 } from "../types";
-import { db } from "./mockDb";
 
-type ListOpts = { storeId?: string };
+const nowISO = (): string => new Date().toISOString();
+const uid = (): string => crypto.randomUUID();
 
-// PRODUCTS
-export const listProducts = (opts: ListOpts = {}): Product[] => {
-  const all = db.listProducts();
-  return opts.storeId ? all.filter((p) => p.storeId === opts.storeId) : all;
+const DEFAULT_STORE_ID = "1";
+
+export type MockDB = {
+  users: User[];
+  serviceOrders: ServiceOrder[];
+  products: Product[];
+  transactions: Transaction[];
+  courierOrders: CourierOrder[];
 };
 
-export const createProduct = (input: Omit<Product, "id">): Product => {
-  return db.addProduct(input);
+export const mockDb: MockDB = {
+  users: [
+    { id: "u1", name: "Edinho Admin", role: "admin" },
+    { id: "u2", name: "Carlos Mecânico", role: "mechanic" },
+    { id: "u3", name: "Ana Caixa", role: "cashier" },
+    { id: "u4", name: "Roberto Motoboy", role: "courier" },
+  ],
+
+  serviceOrders: [
+    {
+      id: "OS-1001",
+      storeId: DEFAULT_STORE_ID,
+      status: ServiceOrderStatus.AGUARDANDO,
+      customerName: "João Silva",
+      plate: "MKT1A23",
+      assignedTo: "Carlos",
+      totalEstimated: 320,
+      updatedAt: nowISO(),
+      vehicle: "Gol 1.6",
+      serviceDescription: "Troca de pneus + balanceamento",
+      priority: "medium",
+    },
+    {
+      id: "OS-1002",
+      storeId: DEFAULT_STORE_ID,
+      status: ServiceOrderStatus.EM_SERVICO,
+      customerName: "Maria Souza",
+      plate: "ABC2D34",
+      assignedTo: "Rafael",
+      totalEstimated: 180,
+      updatedAt: nowISO(),
+      vehicle: "Onix 1.0",
+      serviceDescription: "Alinhamento",
+      priority: "low",
+    },
+    {
+      id: "OS-1003",
+      storeId: DEFAULT_STORE_ID,
+      status: ServiceOrderStatus.FINALIZADO,
+      customerName: "Bruno Lima",
+      plate: "QWE9Z87",
+      assignedTo: "Carlos",
+      totalEstimated: 540,
+      updatedAt: nowISO(),
+      vehicle: "HB20",
+      serviceDescription: "2 pneus + alinhamento + balanceamento",
+      priority: "high",
+    },
+  ],
+
+  products: [
+    {
+      id: uid(),
+      storeId: DEFAULT_STORE_ID,
+      labelId: "P-0001",
+      name: "Pneu 175/70 R13",
+      condition: "Usado",
+      size: "175/70 R13",
+      costPrice: 120,
+      suggestedPrice: 220,
+      status: ProductStatus.APROVADO,
+      stock: 6,
+      category: "Pneus",
+    },
+    {
+      id: uid(),
+      storeId: DEFAULT_STORE_ID,
+      labelId: "P-0002",
+      name: "Pneu 185/65 R15",
+      condition: "Novo",
+      size: "185/65 R15",
+      costPrice: 220,
+      suggestedPrice: 390,
+      status: ProductStatus.EM_CONFERENCIA,
+      stock: 3,
+      category: "Pneus",
+    },
+    {
+      id: uid(),
+      storeId: DEFAULT_STORE_ID,
+      labelId: "P-0100",
+      name: "Válvula de Pneu",
+      condition: "Novo",
+      size: "Universal",
+      costPrice: 2,
+      suggestedPrice: 8,
+      status: ProductStatus.APROVADO,
+      stock: 120,
+      category: "Peças",
+    },
+  ],
+
+  transactions: [
+    {
+      id: uid(),
+      storeId: DEFAULT_STORE_ID,
+      type: "RECEITA",
+      amount: 320,
+      method: PaymentMethod.PIX,
+      createdAt: nowISO(),
+      referenceId: "OS-1001",
+      description: "Venda OS-1001",
+    },
+    {
+      id: uid(),
+      storeId: DEFAULT_STORE_ID,
+      type: "DESPESA",
+      amount: 150,
+      method: PaymentMethod.DINHEIRO,
+      createdAt: nowISO(),
+      description: "Compra de insumos",
+    },
+  ],
+
+  courierOrders: [
+    {
+      id: "1",
+      storeId: DEFAULT_STORE_ID,
+      fromStoreId: "1",
+      toStoreId: "2",
+      status: CourierStatus.ACEITO,
+      otp: "4590",
+      createdAt: "14:00",
+      description: "Transferência de Pneus (4x)",
+      driverName: "Roberto",
+      estimatedArrival: "14:30",
+    },
+    {
+      id: "2",
+      storeId: DEFAULT_STORE_ID,
+      fromStoreId: "1",
+      toStoreId: "3",
+      status: CourierStatus.PENDENTE,
+      createdAt: "14:15",
+      description: "Peças de Reposição",
+      estimatedArrival: "15:00",
+    },
+    {
+      id: "3",
+      storeId: DEFAULT_STORE_ID,
+      fromStoreId: "1",
+      toStoreId: "2",
+      status: CourierStatus.ENTREGUE,
+      createdAt: "10:00",
+      description: "Documentos Fiscais",
+      driverName: "Carlos",
+      estimatedArrival: "10:45",
+    },
+  ],
 };
 
-export const approveProduct = (id: string): Product | null => {
-  return db.updateProduct(id, { status: ProductStatus.APROVADO });
-};
+export const db = {
+  // Products
+  listProducts(): Product[] {
+    return mockDb.products;
+  },
 
-export const updateProductStock = (id: string, stock: number): Product | null => {
-  return db.updateProduct(id, { stock });
-};
+  addProduct(input: Omit<Product, "id">): Product {
+    const created: Product = { ...input, id: uid() };
+    mockDb.products.unshift(created);
+    return created;
+  },
 
-// SERVICE ORDERS (KANBAN)
-export const listServiceOrders = (opts: ListOpts = {}): ServiceOrder[] => {
-  const all = db.listServiceOrders();
-  return opts.storeId ? all.filter((s) => s.storeId === opts.storeId) : all;
-};
+  updateProduct(id: string, patch: Partial<Product>): Product | null {
+    const idx = mockDb.products.findIndex((p: Product) => p.id === id);
+    if (idx === -1) return null;
+    mockDb.products[idx] = { ...mockDb.products[idx], ...patch };
+    return mockDb.products[idx];
+  },
 
-export const moveServiceOrder = (
-  id: string,
-  status: ServiceOrderStatus
-): ServiceOrder | null => {
-  return db.updateServiceOrderStatus(id, status);
-};
+  deleteProduct(id: string): boolean {
+    const before = mockDb.products.length;
+    mockDb.products = mockDb.products.filter((p: Product) => p.id !== id);
+    return mockDb.products.length !== before;
+  },
 
-// TRANSACTIONS (CAIXA)
-export const listTransactions = (opts: ListOpts = {}): Transaction[] => {
-  const all = db.listTransactions();
-  return opts.storeId ? all.filter((t) => t.storeId === opts.storeId) : all;
-};
+  // Service Orders
+  listServiceOrders(): ServiceOrder[] {
+    return mockDb.serviceOrders;
+  },
 
-export const createTransaction = (input: Omit<Transaction, "id" | "createdAt">): Transaction => {
-  return db.addTransaction(input);
-};
+  updateServiceOrderStatus(id: string, status: ServiceOrderStatus): ServiceOrder | null {
+    const so = mockDb.serviceOrders.find((s: ServiceOrder) => s.id === id);
+    if (!so) return null;
+    so.status = status;
+    so.updatedAt = nowISO();
+    return so;
+  },
 
-// COURIER
-export const listCourierOrders = (opts: ListOpts = {}): CourierOrder[] => {
-  const all = db.listCourierOrders();
-  return opts.storeId ? all.filter((c) => c.storeId === opts.storeId) : all;
-};
+  // Transactions
+  listTransactions(): Transaction[] {
+    return mockDb.transactions;
+  },
 
-export const setCourierStatus = (id: string, status: CourierStatus): CourierOrder | null => {
-  return db.updateCourierStatus(id, status);
+  addTransaction(input: Omit<Transaction, "id" | "createdAt">): Transaction {
+    const created: Transaction = { ...input, id: uid(), createdAt: nowISO() };
+    mockDb.transactions.unshift(created);
+    return created;
+  },
+
+  // Courier
+  listCourierOrders(): CourierOrder[] {
+    return mockDb.courierOrders;
+  },
+
+  updateCourierStatus(id: string, status: CourierStatus): CourierOrder | null {
+    const co = mockDb.courierOrders.find((c: CourierOrder) => c.id === id);
+    if (!co) return null;
+    co.status = status;
+    return co;
+  },
 };
