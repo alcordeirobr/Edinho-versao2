@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, MapPin, Key, Clock } from 'lucide-react';
+import { Truck, MapPin, Key } from 'lucide-react';
 import { CourierOrder, CourierStatus } from '../types';
 
 const Courier: React.FC = () => {
